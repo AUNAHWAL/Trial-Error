@@ -1,0 +1,12 @@
+.layout-sidebar__bottom,
+.app-footer, 
+.layout-footer, 
+footer {
+    display: none !important;
+}
+
+.app-layout__content, 
+.layout-sidebar__main {
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+}
