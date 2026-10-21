@@ -11,21 +11,18 @@
             e.preventDefault();
             e.stopPropagation();
             
-            var cardId = cardElement.getAttribute('data-card-id');
-            window.currentContextCardId = cardId;
+            // Запоминаем ID карты и ID конкретного экземпляра
+            window.currentContextCardId = cardElement.getAttribute('data-card-id');
+            window.currentInstanceId = cardElement.getAttribute('data-instance-id');
             
             var menu = document.getElementById('custom-context-menu');
             if (!menu) return;
 
-            // Принудительно переносим в body (защита от обрезки родителем)
             if (menu.parentElement !== document.body) {
                 document.body.appendChild(menu);
             }
             
-            // Показываем меню
             menu.style.setProperty('display', 'block', 'important');
-            
-            // ФИКС: Абсолютный z-index и принудительное позиционирование
             menu.style.setProperty('z-index', '999999', 'important'); 
             
             var x = e.clientX;
@@ -33,7 +30,6 @@
             var menuWidth = menu.offsetWidth || 180;
             var menuHeight = menu.offsetHeight || 150;
             
-            // Умное позиционирование (чтобы меню не улетало за края экрана)
             if (x + menuWidth > window.innerWidth) { x -= menuWidth; }
             if (y + menuHeight > window.innerHeight) { y -= menuHeight; }
             
@@ -49,10 +45,21 @@
         }
     }, true);
 
-    window.handleContextAction = function(actionName) {
-        var cardId = window.currentContextCardId;
-        alert('Выбрано действие: ' + actionName + '\nДля карты с ID: ' + cardId);
+    // ФУНКЦИЯ ОТКРЫТИЯ МОДАЛЬНОГО ОКНА ПРОДАЖИ
+    window.openSellModal = function() {
+        var instanceId = window.currentInstanceId;
+        
+        // Скрываем контекстное меню
         var menu = document.getElementById('custom-context-menu');
         if (menu) menu.style.setProperty('display', 'none', 'important');
+        
+        // Открываем модальное окно "12" и передаем туда ID экземпляра
+        jsAPI.modal.open({ 
+            page: { 
+                src: '12', 
+                query: { P12_INSTANCE_ID: instanceId } 
+            }, 
+            title: 'Выставить на продажу' 
+        });
     };
 })();
