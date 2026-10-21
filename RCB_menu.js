@@ -1,5 +1,5 @@
 (function() {
-    // Защита от двойной инициализации (если XRAD загрузит скрипт дважды)
+    // Защита от двойной инициализации
     if (window.rcbMenuInitialized) return;
     window.rcbMenuInitialized = true;
 
@@ -17,9 +17,19 @@
             window.currentContextCardId = cardId;
             
             var menu = document.getElementById('custom-context-menu');
-            if (!menu) return;
+            if (!menu) {
+                console.warn('Меню не найдено на странице!');
+                return;
+            }
+
+            // ФИКС 1: Принудительно переносим меню в конец body, 
+            // чтобы на него не влияли CSS-стили региона-подвала
+            if (menu.parentElement !== document.body) {
+                document.body.appendChild(menu);
+            }
             
-            menu.style.display = 'block';
+            // ФИКС 2: Показываем меню с максимальным приоритетом (!important)
+            menu.style.setProperty('display', 'block', 'important');
             
             var x = e.clientX;
             var y = e.clientY;
@@ -32,12 +42,12 @@
             menu.style.left = x + 'px';
             menu.style.top = y + 'px';
         }
-    }, true); // true = фаза перехвата (срабатывает раньше XRAD)
+    }, true); // true = фаза перехвата
     
     document.addEventListener('click', function(e) {
         var menu = document.getElementById('custom-context-menu');
-        if (menu && !menu.contains(e.target)) {
-            menu.style.display = 'none';
+        if (menu && menu.style.display === 'block' && !menu.contains(e.target)) {
+            menu.style.setProperty('display', 'none', 'important');
         }
     }, true);
 
@@ -46,6 +56,6 @@
         var cardId = window.currentContextCardId;
         alert('Выбрано действие: ' + actionName + '\nДля карты с ID: ' + cardId);
         var menu = document.getElementById('custom-context-menu');
-        if (menu) menu.style.display = 'none';
+        if (menu) menu.style.setProperty('display', 'none', 'important');
     };
 })();
