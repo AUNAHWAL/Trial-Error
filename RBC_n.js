@@ -1,11 +1,9 @@
+// aaa
 (function() {
-    // Защита от двойной инициализации
     if (window.rcbMenuInitialized) return;
     window.rcbMenuInitialized = true;
 
-    // ==========================================
     // 1. КОНТЕКСТНОЕ МЕНЮ (ПКМ)
-    // ==========================================
     document.addEventListener('contextmenu', function(e) {
         var grid = e.target.closest('.my-card-grid');
         if (!grid) return;
@@ -15,11 +13,30 @@
             e.preventDefault();
             e.stopPropagation();
             
-            window.currentContextCardId = cardElement.getAttribute('data-card-id');
-            window.currentInstanceId = cardElement.getAttribute('data-instance-id');
+            // Получаем данные из атрибутов
+            var listedCount = parseInt(cardElement.getAttribute('data-listed-count') || '0');
+            var unlistedCount = parseInt(cardElement.getAttribute('data-unlisted-count') || '0');
+            
+            window.currentInstanceId = cardElement.getAttribute('data-unlisted-instance-id');
+            window.currentOpenDealId = cardElement.getAttribute('data-open-deal-id');
             
             var menu = document.getElementById('custom-context-menu');
+            var sellBtn = document.getElementById('sell-card-btn');
+            var removeBtn = document.getElementById('remove-sell-btn');
             if (!menu) return;
+
+            // Умное отображение кнопок
+            if (unlistedCount > 0) {
+                sellBtn.style.display = 'block';
+            } else {
+                sellBtn.style.display = 'none';
+            }
+
+            if (listedCount > 0) {
+                removeBtn.style.display = 'block';
+            } else {
+                removeBtn.style.display = 'none';
+            }
 
             if (menu.parentElement !== document.body) {
                 document.body.appendChild(menu);
@@ -49,51 +66,44 @@
         }
     }, true);
 
-    // ==========================================
-    // 2. ОТКРЫТИЕ ОКНА ПРОДАЖИ
-    // ==========================================
+    // 2. ОТКРЫТИЕ ОКНА ПРОДАЖИ (12)
     document.addEventListener('click', function(e) {
         var sellBtn = e.target.closest('#sell-card-btn');
         if (sellBtn) {
             e.preventDefault();
             e.stopPropagation();
-            
             var instanceId = window.currentInstanceId;
             var menu = document.getElementById('custom-context-menu');
             if (menu) menu.style.setProperty('display', 'none', 'important');
             
-            jsAPI.modal.open({ 
-                page: { src: '12', query: { P12_INSTANCE_ID: instanceId } }, 
-                title: 'Выставить на продажу' 
-            });
+            jsAPI.modal.open({ page: { src: '12', query: { P12_INSTANCE_ID: instanceId } }, title: 'Выставить на продажу' });
         }
     }, true);
 
-    // ==========================================
-    // 3. ЖИВАЯ ФИЛЬТРАЦИЯ (Умный перехват)
-    // ==========================================
-    // Запоминаем изначальное значение фильтра при загрузке
-    window.lastKnownFilterValue = null;
+    // 3. ОТКРЫТИЕ ОКНА СНЯТИЯ С ПРОДАЖИ (13)
+    document.addEventListener('click', function(e) {
+        var removeBtn = e.target.closest('#remove-sell-btn');
+        if (removeBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var dealId = window.currentOpenDealId;
+            var menu = document.getElementById('custom-context-menu');
+            if (menu) menu.style.setProperty('display', 'none', 'important');
+            
+            jsAPI.modal.open({ page: { src: '13', query: { P13_DEAL_ID: dealId } }, title: 'Снять с продажи' });
+        }
+    }, true);
 
-        function checkFilterChange() {
+    // 4. ЖИВАЯ ФИЛЬТРАЦИЯ
+    window.lastKnownFilterValue = null;
+    function checkFilterChange() {
         if (window.jsAPI) {
             var currentVal = jsAPI.getItem('P_FILTER');
-            
             if (currentVal !== window.lastKnownFilterValue && currentVal !== undefined) {
                 window.lastKnownFilterValue = currentVal;
-                console.log('Фильтр изменен на:', currentVal);
-                
-                // ✅ ПРАВИЛЬНЫЙ СИНТАКСИС: сначала получаем компонент по ID, затем вызываем refresh()
                 jsAPI.component('REGION_GEN_VUN5I').refresh();
             }
         }
     }
-    // XRAD не вызывает стандартные события для своих списков. 
-    // Поэтому мы "слушаем" любые клики на странице. Как только пользователь 
-    // кликает по выпадающему списку и выбирает значение, мы ждем 150 мс 
-    // и проверяем, изменилось ли значение в системе.
-    document.addEventListener('click', function(e) {
-        setTimeout(checkFilterChange, 150);
-    }, true);
-
+    document.addEventListener('click', function(e) { setTimeout(checkFilterChange, 150); }, true);
 })();
