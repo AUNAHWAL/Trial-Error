@@ -16,12 +16,11 @@
             e.stopPropagation();
             
             window.currentContextCardId = cardElement.getAttribute('data-card-id');
-            window.currentInstanceId = cardElement.getAttribute('data-instance-id'); // Важно для продажи
+            window.currentInstanceId = cardElement.getAttribute('data-instance-id');
             
             var menu = document.getElementById('custom-context-menu');
             if (!menu) return;
 
-            // Переносим в body, чтобы никакие CSS не обрезали меню
             if (menu.parentElement !== document.body) {
                 document.body.appendChild(menu);
             }
@@ -71,24 +70,33 @@
     }, true);
 
     // ==========================================
-    // 3. ЖИВАЯ ФИЛЬТРАЦИЯ
+    // 3. ЖИВАЯ ФИЛЬТРАЦИЯ (Умный перехват)
     // ==========================================
-    function handleFilterChange(e) {
-        if (e.target && (e.target.id === 'P_FILTER' || e.target.name === 'P_FILTER')) {
-            var newValue = e.target.value;
-            console.log('Фильтр изменен на:', newValue); // Для отладки
+    // Запоминаем изначальное значение фильтра при загрузке
+    window.lastKnownFilterValue = null;
+
+    function checkFilterChange() {
+        if (window.jsAPI) {
+            // Получаем текущее значение фильтра из сессии XRAD
+            var currentVal = jsAPI.getItem('P_FILTER');
             
-            if (window.jsAPI) {
-                // Записываем значение в сессию
-                jsAPI.setItem('P_FILTER', newValue);
-                // Обновляем регион с карточками (Static ID: REGION_GEN_VUN5I)
+            // Если значение изменилось (и оно не пустое)
+            if (currentVal !== window.lastKnownFilterValue && currentVal !== undefined) {
+                window.lastKnownFilterValue = currentVal;
+                console.log('Фильтр успешно изменен на:', currentVal);
+                
+                // Обновляем регион с карточками
                 jsAPI.component.refresh('REGION_GEN_VUN5I');
             }
         }
     }
 
-    // Ловим события на фазе перехвата
-    document.addEventListener('change', handleFilterChange, true);
-    document.addEventListener('input', handleFilterChange, true);
+    // XRAD не вызывает стандартные события для своих списков. 
+    // Поэтому мы "слушаем" любые клики на странице. Как только пользователь 
+    // кликает по выпадающему списку и выбирает значение, мы ждем 150 мс 
+    // и проверяем, изменилось ли значение в системе.
+    document.addEventListener('click', function(e) {
+        setTimeout(checkFilterChange, 150);
+    }, true);
 
 })();
