@@ -75,22 +75,19 @@
     // Запоминаем изначальное значение фильтра при загрузке
     window.lastKnownFilterValue = null;
 
-    function checkFilterChange() {
+        function checkFilterChange() {
         if (window.jsAPI) {
-            // Получаем текущее значение фильтра из сессии XRAD
             var currentVal = jsAPI.getItem('P_FILTER');
             
-            // Если значение изменилось (и оно не пустое)
             if (currentVal !== window.lastKnownFilterValue && currentVal !== undefined) {
                 window.lastKnownFilterValue = currentVal;
-                console.log('Фильтр успешно изменен на:', currentVal);
+                console.log('Фильтр изменен на:', currentVal);
                 
-                // Обновляем регион с карточками
-                jsAPI.component.refresh('REGION_GEN_VUN5I');
+                // ✅ ПРАВИЛЬНЫЙ СИНТАКСИС: сначала получаем компонент по ID, затем вызываем refresh()
+                jsAPI.component('REGION_GEN_VUN5I').refresh();
             }
         }
     }
-
     // XRAD не вызывает стандартные события для своих списков. 
     // Поэтому мы "слушаем" любые клики на странице. Как только пользователь 
     // кликает по выпадающему списку и выбирает значение, мы ждем 150 мс 
